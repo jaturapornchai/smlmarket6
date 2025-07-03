@@ -1,4 +1,6 @@
 
+import { getRandomAutoPartImage } from './imageUtils';
+
 interface Product {
     id: string;
     code: string;
@@ -81,6 +83,9 @@ export const searchProducts = async (
             const salePrice = discountPercent > 0 ? Math.floor(randomPrice / (1 - discountPercent / 100)) : randomPrice;
             const finalPrice = randomPrice;
 
+            // Get random demo image for auto parts
+            const demoImage = getRandomAutoPartImage();
+
             return {
                 ...product,
                 qty_available: randomQty,
@@ -88,7 +93,8 @@ export const searchProducts = async (
                 price: randomPrice,
                 sale_price: salePrice,
                 final_price: finalPrice,
-                discount_price: discountPercent > 0 ? randomPrice : salePrice
+                discount_price: discountPercent > 0 ? randomPrice : salePrice,
+                img_url: demoImage // Replace with demo image
             };
         });
     }
