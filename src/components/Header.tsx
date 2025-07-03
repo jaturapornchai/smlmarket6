@@ -1,6 +1,7 @@
 'use client';
 
 import { NAVIGATION_MENU, SHOP_INFO } from '@/lib/constants';
+import { useCart } from '@/lib/firebaseHooks';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
@@ -13,6 +14,9 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ showBackButton = false, onBackClick }) => {
     const pathname = usePathname();
 
+    // Get cart count from Firebase (ใช้ email demo ก่อน - ในการใช้งานจริงจะได้จาก authentication)
+    const { cartItemCount } = useCart('user@example.com');
+
     const getMenuIcon = (iconType: string) => {
         switch (iconType) {
             case 'search':
@@ -23,9 +27,16 @@ const Header: React.FC<HeaderProps> = ({ showBackButton = false, onBackClick }) 
                 );
             case 'cart':
                 return (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5-5M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z" />
-                    </svg>
+                    <div className="relative">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5-5M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z" />
+                        </svg>
+                        {cartItemCount > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                                {cartItemCount > 99 ? '99+' : cartItemCount}
+                            </span>
+                        )}
+                    </div>
                 );
             case 'orders':
                 return (
@@ -73,8 +84,8 @@ const Header: React.FC<HeaderProps> = ({ showBackButton = false, onBackClick }) 
                                     key={item.name}
                                     href={item.href}
                                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                                            ? 'bg-indigo-100 text-indigo-700'
-                                            : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-100'
+                                        ? 'bg-indigo-100 text-indigo-700'
+                                        : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-100'
                                         }`}
                                 >
                                     {getMenuIcon(item.icon)}
@@ -107,8 +118,8 @@ const Header: React.FC<HeaderProps> = ({ showBackButton = false, onBackClick }) 
                                 key={item.name}
                                 href={item.href}
                                 className={`flex flex-col items-center space-y-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${isActive
-                                        ? 'text-indigo-700'
-                                        : 'text-gray-600 hover:text-indigo-600'
+                                    ? 'text-indigo-700'
+                                    : 'text-gray-600 hover:text-indigo-600'
                                     }`}
                             >
                                 {getMenuIcon(item.icon)}

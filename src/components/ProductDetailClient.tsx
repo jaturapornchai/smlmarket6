@@ -2,6 +2,7 @@
 
 import { Header } from '@/components';
 import { Product } from '@/lib/api';
+import { useCart } from '@/lib/firebaseHooks';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -15,6 +16,9 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     const [quantityInput, setQuantityInput] = useState('1'); // Separate state for input display
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const router = useRouter();
+
+    // Use Firebase cart hook (ใช้ email demo ก่อน - ในการใช้งานจริงจะได้จาก authentication)
+    const { addToCart, cartItemCount, loading: cartLoading } = useCart('user@example.com');
 
     const handleBackClick = () => {
         // Use browser back to maintain state
@@ -61,14 +65,25 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
         setIsAddingToCart(true);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+            // Add to Firebase cart
+            await addToCart({
+                productId: product.id,
+                name: product.name,
+                code: product.code,
+                price: product.final_price,
+                image: product.img_url,
+                unit: product.unit,
+                quantity: quantity
+            });
 
-        // Here you would typically add to cart via API or context
-        // For now, we'll just show a success message
-        alert(`เพิ่ม ${product.name} จำนวน ${quantity} ${product.unit} ลงในตระกร้าเรียบร้อย`);
-
-        setIsAddingToCart(false);
+            alert(`เพิ่ม ${product.name} จำนวน ${quantity} ${product.unit} ลงในตระกร้าเรียบร้อย`);
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            alert('เกิดข้อผิดพลาดในการเพิ่มสินค้าลงตระกร้า');
+        } finally {
+            setIsAddingToCart(false);
+        }
     };
 
     const totalPrice = product.final_price * quantity;
