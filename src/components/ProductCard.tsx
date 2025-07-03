@@ -21,7 +21,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             timestamp: Date.now()
         };
         sessionStorage.setItem('homeScrollPosition', JSON.stringify(currentState));
-        
+
         // For now, we'll pass the product data via query params since we don't have a product-by-id API
         const productData = encodeURIComponent(JSON.stringify(product));
         router.push(`/product/${product.code}?data=${productData}`);

@@ -65,7 +65,35 @@ export const searchProducts = async (
         throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const data: SearchResponse = await response.json();
+
+    // Modify data for demo purposes
+    if (data.success && data.data.data) {
+        data.data.data = data.data.data.map(product => {
+            // Random quantity between 6 and 999 (> 5 and < 1000)
+            const randomQty = Math.floor(Math.random() * 994) + 6;
+
+            // Random price between 100 and 10000
+            const randomPrice = Math.floor(Math.random() * 9901) + 100;
+
+            // Calculate discount (keep original discount percent if exists)
+            const discountPercent = product.discount_percent || 0;
+            const salePrice = discountPercent > 0 ? Math.floor(randomPrice / (1 - discountPercent / 100)) : randomPrice;
+            const finalPrice = randomPrice;
+
+            return {
+                ...product,
+                qty_available: randomQty,
+                balance_qty: randomQty,
+                price: randomPrice,
+                sale_price: salePrice,
+                final_price: finalPrice,
+                discount_price: discountPercent > 0 ? randomPrice : salePrice
+            };
+        });
+    }
+
+    return data;
 };
 
 export type { Product, SearchRequest, SearchResponse };

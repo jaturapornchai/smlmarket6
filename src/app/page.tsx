@@ -1,7 +1,8 @@
 'use client';
 
-import { LoadingSpinner, ProductCard, SearchBar } from '@/components';
+import { Header, LoadingSpinner, ProductCard, SearchBar } from '@/components';
 import { Product, searchProducts } from '@/lib/api';
+import { WELCOME_MESSAGE } from '@/lib/constants';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function Home() {
@@ -19,7 +20,7 @@ export default function Home() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const itemsPerPage = 20;
+  const itemsPerPage = 100;
 
   // Save page state to sessionStorage
   const savePageState = useCallback(() => {
@@ -47,7 +48,7 @@ export default function Home() {
         setLastQuery(state.lastQuery || '');
         setHasMore(state.hasMore !== false);
         setTotalCount(state.totalCount || 0);
-        
+
         // Restore scroll position after a short delay
         if (state.scrollY) {
           setTimeout(() => {
@@ -210,7 +211,10 @@ export default function Home() {
           loadMoreProducts();
         }
       },
-      { threshold: 0.1 }
+      {
+        threshold: 0.1,
+        rootMargin: '200px' // Start loading when the trigger is 200px away from viewport
+      }
     );
 
     if (loadMoreRef.current) {
@@ -251,30 +255,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
-                  SML Market
-                </h1>
-                <p className="text-xs sm:text-sm text-gray-600">
-                  ระบบค้นหาสินค้าอัจฉริยะ
-                </p>
-              </div>
-            </div>
-            <div className="text-xs sm:text-sm text-gray-500 hidden sm:block">
-              API: smlgoapi.dedepos.com
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-8">
@@ -426,33 +407,9 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Load More Indicator */}
+            {/* Invisible trigger for infinite scroll */}
             {hasMore && (
-              <div ref={loadMoreRef} className="flex flex-col items-center justify-center mt-8 space-y-4">
-                {loadingMore ? (
-                  <LoadingSpinner
-                    size="md"
-                    text="กำลังโหลดสินค้าเพิ่มเติม..."
-                  />
-                ) : (
-                  <>
-                    <div className="text-center py-4">
-                      <div className="text-sm text-gray-500 mb-3">
-                        เลื่อนลงเพื่อดูสินค้าเพิ่มเติม
-                      </div>
-                      <button
-                        onClick={loadMoreProducts}
-                        className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 
-                                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
-                                 transition-all duration-300 transform hover:scale-105
-                                 font-medium text-sm sm:text-base"
-                      >
-                        โหลดสินค้าเพิ่มเติม
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
+              <div ref={loadMoreRef} className="h-10 w-full" style={{ minHeight: '1px' }} />
             )}
 
             {/* End of Results */}
@@ -473,10 +430,10 @@ export default function Home() {
               </svg>
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
-              ยินดีต้อนรับสู่ SML Market
+              {WELCOME_MESSAGE.title}
             </h3>
             <p className="text-gray-600 text-base sm:text-lg max-w-md mx-auto mb-6 sm:mb-8">
-              ค้นหาสินค้าด้วยเทคโนโลยี AI ที่รองรับภาษาไทยและอังกฤษ
+              {WELCOME_MESSAGE.subtitle}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">

@@ -1,5 +1,6 @@
 'use client';
 
+import { Header } from '@/components';
 import { Product } from '@/lib/api';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -74,31 +75,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header - Sticky */}
-            <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2 sm:space-x-3">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
-                                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
-                                    SML Market
-                                </h1>
-                                <p className="text-xs sm:text-sm text-gray-600">
-                                    ระบบค้นหาสินค้าอัจฉริยะ
-                                </p>
-                            </div>
-                        </div>
-                        <div className="text-xs sm:text-sm text-gray-500 hidden sm:block">
-                            API: smlgoapi.dedepos.com
-                        </div>
-                    </div>
-                </div>
-            </header>
+            {/* Header */}
+            <Header showBackButton={true} onBackClick={handleBackClick} />
 
             <div className="container mx-auto px-4 py-8">
                 {/* Back Button */}
@@ -257,8 +235,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                                         onClick={handleAddToCart}
                                         disabled={isAddingToCart || product.final_price === 0}
                                         className={`w-full py-4 px-6 rounded-xl font-medium text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2 ${product.final_price === 0
-                                                ? 'bg-gray-400 text-white cursor-not-allowed'
-                                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
                                             }`}
                                     >
                                         {isAddingToCart ? (
