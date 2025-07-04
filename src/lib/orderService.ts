@@ -100,9 +100,9 @@ export class OrderService {
 
         if (snapshot.exists()) {
             const ordersData = snapshot.val();
-            return Object.values(ordersData)
-                .filter((order: any) => order.userId === userKey)
-                .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) as Order[];
+            return (Object.values(ordersData) as Order[])
+                .filter((order: Order) => order.userId === userKey)
+                .sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         }
 
         return [];
@@ -189,8 +189,8 @@ export class OrderService {
 
         if (snapshot.exists()) {
             const ordersData = snapshot.val();
-            return Object.values(ordersData)
-                .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) as Order[];
+            return (Object.values(ordersData) as Order[])
+                .sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         }
 
         return [];

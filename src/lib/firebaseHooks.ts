@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CartService } from './cartService';
-import { CartItem, Order, OrderStatus, User } from './firebaseTypes';
+import { CartItem, Order, OrderItem, OrderStatus, User } from './firebaseTypes';
 import { OrderService } from './orderService';
 import { UserService } from './userService';
 
@@ -112,11 +112,26 @@ export function useOrders(userEmail: string) {
     }, [userEmail]);
 
     const createOrder = async (
-        items: any[],
+        items: CartItem[],
         customerNote: string = ''
     ): Promise<string | null> => {
         try {
-            const orderNumber = await OrderService.createOrder(userEmail, items, customerNote);
+            // Convert CartItem[] to OrderItem[]
+            const orderItems: OrderItem[] = items.map(item => ({
+                productId: item.productId,
+                name: item.name,
+                code: item.code,
+                price: item.price,
+                image: item.image,
+                unit: item.unit,
+                quantity: item.quantity,
+                subtotal: item.price * item.quantity,
+                priceAccepted: true,
+                negotiatedPrice: item.price,
+                negotiationReason: ''
+            }));
+
+            const orderNumber = await OrderService.createOrder(userEmail, orderItems, customerNote);
             await refreshOrders();
             return orderNumber;
         } catch (err) {
@@ -174,6 +189,51 @@ export function useUser(email: string) {
         error,
         updateProfile,
         refreshUser
+    };
+}
+
+// Hook for user orders management
+export function useUserOrders(userEmail: string) {
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const refreshOrders = async () => {
+        try {
+            setLoading(true);
+            if (userEmail) {
+                const userOrders = await OrderService.getUserOrders(userEmail);
+                setOrders(userOrders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()));
+            } else {
+                setOrders([]);
+            }
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error loading orders');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        refreshOrders();
+    }, [userEmail]);
+
+    const getOrderByNumber = (orderNumber: string) => {
+        return orders.find(order => order.orderNumber === orderNumber);
+    };
+
+    const getOrdersByStatus = (status: OrderStatus) => {
+        return orders.filter(order => order.status === status);
+    };
+
+    return {
+        orders,
+        loading,
+        error,
+        getOrderByNumber,
+        getOrdersByStatus,
+        refreshOrders
     };
 }
 

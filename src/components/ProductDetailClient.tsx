@@ -1,7 +1,8 @@
 'use client';
 
-import { Header } from '@/components';
+import { Header, Notification } from '@/components';
 import { Product } from '@/lib/api';
+import { useAuth } from '@/lib/authContext';
 import { useCart } from '@/lib/firebaseHooks';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -11,14 +12,38 @@ interface ProductDetailClientProps {
     product: Product;
 }
 
+interface NotificationState {
+    show: boolean;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+}
+
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
     const [quantity, setQuantity] = useState(1);
     const [quantityInput, setQuantityInput] = useState('1'); // Separate state for input display
     const [isAddingToCart, setIsAddingToCart] = useState(false);
+    const [notification, setNotification] = useState<NotificationState>({
+        show: false,
+        message: '',
+        type: 'info'
+    });
     const router = useRouter();
+    const { user, isLoggedIn } = useAuth();
 
-    // Use Firebase cart hook (ใช้ email demo ก่อน - ในการใช้งานจริงจะได้จาก authentication)
-    const { addToCart, cartItemCount, loading: cartLoading } = useCart('user@example.com');
+    // Use Firebase cart hook with logged-in user's email
+    const { addToCart } = useCart(user?.email || '');
+
+    const showNotification = (message: string, type: NotificationState['type']) => {
+        setNotification({
+            show: true,
+            message,
+            type
+        });
+    };
+
+    const hideNotification = () => {
+        setNotification(prev => ({ ...prev, show: false }));
+    };
 
     const handleBackClick = () => {
         // Use browser back to maintain state
@@ -57,9 +82,23 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     };
 
     const handleAddToCart = async () => {
+        // Prevent double-click or rapid clicks
+        if (isAddingToCart) {
+            return;
+        }
+
+        // Check if user is logged in
+        if (!isLoggedIn || !user) {
+            showNotification('กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า', 'warning');
+            setTimeout(() => {
+                router.push('/login');
+            }, 2000);
+            return;
+        }
+
         // Prevent adding to cart if price is zero
         if (product.final_price === 0) {
-            alert('ไม่สามารถเพิ่มสินค้าที่ไม่มีราคาลงในตระกร้าได้');
+            showNotification('ไม่สามารถเพิ่มสินค้าที่ไม่มีราคาลงในตะกร้าได้', 'error');
             return;
         }
 
@@ -77,19 +116,32 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 quantity: quantity
             });
 
-            alert(`เพิ่ม ${product.name} จำนวน ${quantity} ${product.unit} ลงในตระกร้าเรียบร้อย`);
+            showNotification(`เพิ่ม ${product.name} จำนวน ${quantity} ${product.unit} ลงในตะกร้าเรียบร้อย`, 'success');
+
+            // Navigate back to search page after successful add
+            setTimeout(() => {
+                router.push('/');
+            }, 1200); // Reduced time for faster navigation
         } catch (error) {
             console.error('Error adding to cart:', error);
-            alert('เกิดข้อผิดพลาดในการเพิ่มสินค้าลงตระกร้า');
-        } finally {
-            setIsAddingToCart(false);
+            showNotification('เกิดข้อผิดพลาดในการเพิ่มสินค้าลงตะกร้า', 'error');
+            setIsAddingToCart(false); // Reset button state on error
         }
+        // Don't reset isAddingToCart on success to prevent double-click until redirect
     };
 
     const totalPrice = product.final_price * quantity;
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {/* Notification */}
+            <Notification
+                show={notification.show}
+                message={notification.message}
+                type={notification.type}
+                onClose={hideNotification}
+            />
+
             {/* Header */}
             <Header showBackButton={true} onBackClick={handleBackClick} />
 
@@ -106,6 +158,20 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                         กลับไปหน้าหลัก
                     </button>
                 </div>
+
+                {/* Login Required Message */}
+                {!isLoggedIn && (
+                    <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-center">
+                            <svg className="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <span className="text-yellow-800 font-medium">
+                                กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า
+                            </span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Product Details */}
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -248,8 +314,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                                     {/* Add to Cart Button */}
                                     <button
                                         onClick={handleAddToCart}
-                                        disabled={isAddingToCart || product.final_price === 0}
-                                        className={`w-full py-4 px-6 rounded-xl font-medium text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2 ${product.final_price === 0
+                                        disabled={isAddingToCart || product.final_price === 0 || !isLoggedIn}
+                                        className={`w-full py-4 px-6 rounded-xl font-medium text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2 ${product.final_price === 0 || !isLoggedIn
                                             ? 'bg-gray-400 text-white cursor-not-allowed'
                                             : 'bg-indigo-600 text-white hover:bg-indigo-700'
                                             }`}
@@ -261,6 +327,13 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                 </svg>
                                                 <span>กำลังเพิ่ม...</span>
+                                            </>
+                                        ) : !isLoggedIn ? (
+                                            <>
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                <span>กรุณาเข้าสู่ระบบก่อน</span>
                                             </>
                                         ) : product.final_price === 0 ? (
                                             <>
@@ -274,7 +347,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5-5M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z" />
                                                 </svg>
-                                                <span>เพิ่มลงในตระกร้า</span>
+                                                <span>เพิ่มลงในตะกร้า</span>
                                             </>
                                         )}
                                     </button>

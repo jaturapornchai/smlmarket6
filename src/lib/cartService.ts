@@ -83,7 +83,7 @@ export class CartService {
         const cartItems = await this.getCart(userEmail);
         const existingItem = cartItems.find(item => item.productId === product.productId);
 
-        if (existingItem) {
+        if (existingItem && existingItem.id) {
             // Update quantity of existing item
             await this.updateCartItem(userEmail, existingItem.id, existingItem.quantity + product.quantity);
         } else {

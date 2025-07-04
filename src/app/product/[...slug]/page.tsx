@@ -1,15 +1,22 @@
 import ProductDetailClient from '@/components/ProductDetailClient';
 import { Product } from '@/lib/api';
-import { decodeProductId, isValidProductCode } from '@/lib/productUtils';
+import { isValidProductCode } from '@/lib/productUtils';
 import { notFound } from 'next/navigation';
 
 interface ProductPageProps {
     params: Promise<{
-        id: string;
+        slug: string[];
     }>;
     searchParams: Promise<{
         data?: string;
     }>;
+}
+
+// Generate static params for static export
+export async function generateStaticParams() {
+    // Return empty array since we can't pre-generate all possible product routes
+    // The routes will be generated on-demand
+    return [];
 }
 
 // This would normally fetch from an API or database
@@ -78,47 +85,38 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     console.log('Product page params:', resolvedParams);
     console.log('Product page searchParams:', resolvedSearchParams);
 
-    // Get the raw ID from params
-    let productId = resolvedParams.id;
+    // Join the slug parts to reconstruct the full product code
+    const productId = resolvedParams.slug.join('/');
+    console.log('Reconstructed product ID from slug:', productId);
 
     // If we have product data, try to extract the real product code from it
+    let finalId = productId;
     if (resolvedSearchParams.data) {
         try {
             const parsed = JSON.parse(decodeURIComponent(resolvedSearchParams.data));
             if (parsed.code) {
-                productId = parsed.code;
-                console.log('Using product code from data:', productId);
+                finalId = parsed.code;
+                console.log('Using product code from data:', finalId);
             }
         } catch (error) {
             console.error('Error parsing product data for code extraction:', error);
         }
-    } else {
-        // Only try to decode if we don't have product data (meaning it might be encoded)
-        try {
-            const decodedId = decodeProductId(productId);
-            if (decodedId && decodedId !== productId) {
-                productId = decodedId;
-                console.log('Successfully decoded product ID:', productId);
-            }
-        } catch {
-            console.log('Could not decode product ID (might not be encoded), using as-is:', productId);
-            // Error is logged but not used further
-        }
     }
 
-    console.log('Final product ID:', productId);
+    console.log('Final product ID:', finalId);
 
     // Validate product code
-    if (!isValidProductCode(productId)) {
-        console.error('Invalid product code:', productId);
-        console.error('Original encoded ID:', resolvedParams.id);
+    if (!isValidProductCode(finalId)) {
+        console.error('Invalid product code:', finalId);
+        console.error('Original slug:', resolvedParams.slug);
+        console.error('Reconstructed ID:', productId);
         notFound();
     }
 
-    const product = await getProduct(productId, resolvedSearchParams.data);
+    const product = await getProduct(finalId, resolvedSearchParams.data);
 
     if (!product) {
-        console.error('Product not found:', productId);
+        console.error('Product not found:', finalId);
         console.error('Available product data:', resolvedSearchParams.data ? 'Yes' : 'No');
         notFound();
     }

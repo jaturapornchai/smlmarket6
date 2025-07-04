@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@/lib/authContext';
 import { NAVIGATION_MENU, SHOP_INFO } from '@/lib/constants';
 import { useCart } from '@/lib/firebaseHooks';
 import Link from 'next/link';
@@ -13,9 +14,10 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ showBackButton = false, onBackClick }) => {
     const pathname = usePathname();
+    const { user, isLoggedIn, logout } = useAuth();
 
-    // Get cart count from Firebase (ใช้ email demo ก่อน - ในการใช้งานจริงจะได้จาก authentication)
-    const { cartItemCount } = useCart('user@example.com');
+    // Get cart count from Firebase (use logged-in user's email)
+    const { cartItemCount } = useCart(user?.email || '');
 
     const getMenuIcon = (iconType: string) => {
         switch (iconType) {
@@ -75,44 +77,78 @@ const Header: React.FC<HeaderProps> = ({ showBackButton = false, onBackClick }) 
                         </div>
                     </div>
 
-                    {/* Navigation Menu */}
-                    <nav className="hidden md:flex items-center space-x-6">
-                        {NAVIGATION_MENU.map((item) => {
-                            const isActive = pathname === item.href;
-                            return (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                                        ? 'bg-indigo-100 text-indigo-700'
-                                        : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-100'
-                                        }`}
+                    {/* User Info & Navigation */}
+                    <div className="flex items-center space-x-4">
+                        {/* User Info */}
+                        {isLoggedIn && user && (
+                            <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span className="font-medium">{user.name}</span>
+                                <button
+                                    onClick={logout}
+                                    className="text-red-600 hover:text-red-700 ml-2"
+                                    title="ออกจากระบบ"
                                 >
-                                    {getMenuIcon(item.icon)}
-                                    <span>{item.name}</span>
-                                </Link>
-                            );
-                        })}
-                    </nav>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
 
-                    {/* Mobile Back Button */}
-                    {showBackButton && (
-                        <button
-                            onClick={onBackClick}
-                            className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition-colors md:hidden"
-                        >
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                            </svg>
-                            กลับ
-                        </button>
-                    )}
+                        {/* Navigation Menu */}
+                        <nav className="hidden md:flex items-center space-x-6">
+                            {NAVIGATION_MENU.map((item) => {
+                                const isActive = pathname === item.href;
+
+                                // Skip cart and orders if not logged in
+                                if (!isLoggedIn && (item.href === '/cart' || item.href === '/orders')) {
+                                    return null;
+                                }
+
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        href={item.href}
+                                        className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
+                                            ? 'bg-indigo-100 text-indigo-700'
+                                            : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        {getMenuIcon(item.icon)}
+                                        <span>{item.name}</span>
+                                    </Link>
+                                );
+                            })}
+                        </nav>
+
+                        {/* Mobile Back Button */}
+                        {showBackButton && (
+                            <button
+                                onClick={onBackClick}
+                                className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition-colors md:hidden"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                                กลับ
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Mobile Navigation */}
                 <nav className="md:hidden mt-4 flex items-center justify-around border-t border-gray-200 pt-3">
                     {NAVIGATION_MENU.map((item) => {
                         const isActive = pathname === item.href;
+
+                        // Skip cart and orders if not logged in
+                        if (!isLoggedIn && (item.href === '/cart' || item.href === '/orders')) {
+                            return null;
+                        }
+
                         return (
                             <Link
                                 key={item.name}
@@ -127,6 +163,27 @@ const Header: React.FC<HeaderProps> = ({ showBackButton = false, onBackClick }) 
                             </Link>
                         );
                     })}
+
+                    {/* Mobile User Info */}
+                    {isLoggedIn && user && (
+                        <div className="flex flex-col items-center space-y-1 px-2 py-1 text-xs">
+                            <div className="flex items-center space-x-1">
+                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <button
+                                    onClick={logout}
+                                    className="text-red-600 hover:text-red-700"
+                                    title="ออกจากระบบ"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <span className="text-gray-600 font-medium truncate max-w-16">{user.name}</span>
+                        </div>
+                    )}
                 </nav>
             </div>
         </header>

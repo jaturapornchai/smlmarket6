@@ -1,6 +1,7 @@
 'use client';
 
 import { Product } from '@/lib/api';
+import { encodeProductId } from '@/lib/productUtils';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -22,9 +23,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         };
         sessionStorage.setItem('homeScrollPosition', JSON.stringify(currentState));
 
-        // For now, we'll pass the product data via query params since we don't have a product-by-id API
-        const productData = encodeURIComponent(JSON.stringify(product));
-        router.push(`/product/${product.code}?data=${productData}`);
+        // Create safe product URL using utility function
+        const productUrl = `/product?id=${encodeURIComponent(encodeProductId(product.code))}&data=${encodeURIComponent(JSON.stringify(product))}`;
+        router.push(productUrl);
     };
 
     return (
