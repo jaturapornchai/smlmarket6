@@ -71,7 +71,8 @@ export default function CartPage() {
 
         } catch (err) {
             console.error('Error creating order:', err);
-            alert('เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง');
+            const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ';
+            alert(`เกิดข้อผิดพลาด: ${errorMessage}\nกรุณาลองใหม่อีกครั้ง`);
         } finally {
             setIsCreatingOrder(false);
         }
@@ -119,9 +120,17 @@ export default function CartPage() {
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900 mb-4">เกิดข้อผิดพลาด</h1>
                         <p className="text-gray-600 mb-4">{error}</p>
-                        <Link href="/" className="text-indigo-600 hover:text-indigo-800 font-medium">
-                            กลับไปหน้าแรก
-                        </Link>
+                        <div className="space-x-4">
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                ลองใหม่
+                            </button>
+                            <Link href="/" className="inline-block bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                กลับไปหน้าแรก
+                            </Link>
+                        </div>
                     </div>
                 </main>
             </div>

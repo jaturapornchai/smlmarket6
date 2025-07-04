@@ -60,12 +60,29 @@ export default function OrdersClient() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="text-red-500 text-xl mb-4">⚠️</div>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Orders</h2>
-                    <p className="text-gray-600">{error}</p>
-                </div>
+            <div className="min-h-screen bg-gray-50">
+                <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-8">
+                    <div className="text-center py-12">
+                        <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg className="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                        </div>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-4">เกิดข้อผิดพลาด</h1>
+                        <p className="text-gray-600 mb-4">{error}</p>
+                        <div className="space-x-4">
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                ลองใหม่
+                            </button>
+                            <Link href="/" className="inline-block bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                กลับไปหน้าแรก
+                            </Link>
+                        </div>
+                    </div>
+                </main>
             </div>
         );
     }
@@ -74,26 +91,28 @@ export default function OrdersClient() {
         <div className="min-h-screen bg-gray-50">
             {/* Success Message */}
             {showSuccess && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                    <div className="flex">
-                        <div className="py-1">
-                            <svg className="fill-current h-6 w-6 text-green-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p className="font-bold">Order Created Successfully!</p>
-                            <p className="text-sm">Order Number: {successOrderNumber}</p>
-                        </div>
-                        <div className="ml-auto">
-                            <button
-                                onClick={() => setShowSuccess(false)}
-                                className="text-green-700 hover:text-green-900"
-                            >
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4">
+                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
+                        <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                                <svg className="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                            </button>
+                            </div>
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-green-800">สร้างคำสั่งซื้อเรียบร้อย!</h3>
+                                <p className="text-sm text-green-700">หมายเลขคำสั่งซื้อ: {successOrderNumber}</p>
+                            </div>
+                            <div className="ml-auto pl-3">
+                                <button
+                                    onClick={() => setShowSuccess(false)}
+                                    className="text-green-700 hover:text-green-900 focus:outline-none"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -149,12 +168,12 @@ export default function OrdersClient() {
                                             </div>
                                             <div className="mt-4 sm:mt-0 sm:ml-4 flex-shrink-0">
                                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                        order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                                                            order.status === 'processing' ? 'bg-purple-100 text-purple-800' :
-                                                                order.status === 'shipped' ? 'bg-indigo-100 text-indigo-800' :
-                                                                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                                        order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                            'bg-gray-100 text-gray-800'
+                                                    order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                                                        order.status === 'processing' ? 'bg-purple-100 text-purple-800' :
+                                                            order.status === 'shipped' ? 'bg-indigo-100 text-indigo-800' :
+                                                                order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                                    order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                        'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     {order.status === 'pending' && 'รอดำเนินการ'}
                                                     {order.status === 'confirmed' && 'ยืนยันแล้ว'}

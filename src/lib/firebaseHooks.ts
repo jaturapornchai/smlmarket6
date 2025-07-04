@@ -13,11 +13,19 @@ export function useCart(userEmail: string) {
     const refreshCart = async () => {
         try {
             setLoading(true);
+            setError(null);
+
+            if (!userEmail) {
+                setCartItems([]);
+                return;
+            }
+
             const items = await CartService.getCart(userEmail);
             setCartItems(items);
-            setError(null);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error loading cart');
+            console.error('Error loading cart:', err);
+            setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดตระกร้า');
+            setCartItems([]);
         } finally {
             setLoading(false);
         }
@@ -31,15 +39,24 @@ export function useCart(userEmail: string) {
 
     const addToCart = async (item: Omit<CartItem, 'addedAt' | 'updatedAt' | 'id'>) => {
         try {
+            if (!userEmail) {
+                throw new Error('ไม่มีผู้ใช้เข้าสู่ระบบ');
+            }
+
             await CartService.addOrUpdateProduct(userEmail, item);
             await refreshCart();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error adding to cart');
+            console.error('Error adding to cart:', err);
+            setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเพิ่มสินค้า');
         }
     };
 
     const updateQuantity = async (itemId: string, quantity: number) => {
         try {
+            if (!userEmail) {
+                throw new Error('ไม่มีผู้ใช้เข้าสู่ระบบ');
+            }
+
             if (quantity <= 0) {
                 await CartService.removeFromCart(userEmail, itemId);
             } else {
@@ -47,25 +64,36 @@ export function useCart(userEmail: string) {
             }
             await refreshCart();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error updating cart');
+            console.error('Error updating cart:', err);
+            setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการอัปเดตจำนวน');
         }
     };
 
     const removeItem = async (itemId: string) => {
         try {
+            if (!userEmail) {
+                throw new Error('ไม่มีผู้ใช้เข้าสู่ระบบ');
+            }
+
             await CartService.removeFromCart(userEmail, itemId);
             await refreshCart();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error removing item');
+            console.error('Error removing item:', err);
+            setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการลบสินค้า');
         }
     };
 
     const clearCart = async () => {
         try {
+            if (!userEmail) {
+                throw new Error('ไม่มีผู้ใช้เข้าสู่ระบบ');
+            }
+
             await CartService.clearCart(userEmail);
             await refreshCart();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error clearing cart');
+            console.error('Error clearing cart:', err);
+            setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการล้างตระกร้า');
         }
     };
 

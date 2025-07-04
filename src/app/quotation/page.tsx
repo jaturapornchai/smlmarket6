@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/authContext';
 import { useCart } from '@/lib/firebaseHooks';
+import { generateQuotationPDF, previewQuotationPDF, QuotationData } from '@/lib/pdfReactRendererLocal';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -106,6 +107,57 @@ export default function QuotationPage() {
         router.back();
     };
 
+    const handleGeneratePDF = () => {
+        const pdfData = getPDFData();
+        generateQuotationPDF(pdfData);
+    };
+
+    const handlePreviewPDF = () => {
+        const pdfData = getPDFData();
+        previewQuotationPDF(pdfData);
+    };
+
+    const getPDFData = (): QuotationData => {
+        return {
+            quotationNumber,
+            date: quotationDate,
+            customer: {
+                name: customer.name,
+                address: customer.address,
+                phone: customer.phone,
+                taxId: customer.taxId
+            },
+            company: companyInfo,
+            items: quotationItems.map(item => ({
+                name: item.description,
+                code: `ITEM-${item.no.toString().padStart(3, '0')}`,
+                quantity: item.quantity,
+                unit: item.unit,
+                price: item.unitPrice,
+                total: item.amount
+            })),
+            summary: {
+                subtotal: cartTotal,
+                vat: vatAmount,
+                total: totalWithVat
+            },
+            validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('th-TH', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }),
+            terms: [
+                'ราคาดังกล่าวยังไม่รวมภาษีมูลค่าเพิ่ม 7%',
+                'ใบเสนอราคานี้มีอายุ 30 วัน นับจากวันที่ออกใบเสนอราคา',
+                'การชำระเงิน โอนเข้าบัญชีธนาคารหรือเงินสดก่อนส่งของ',
+                'สินค้าทุกชิ้นมีการรับประกันตามมาตรฐานของผู้ผลิต',
+                'การส่งมอบสินค้าภายใน 3-7 วันทำการ หลังจากได้รับการยืนยันคำสั่งซื้อ',
+                'บริษัทฯ ขอสงวนสิทธิ์ในการเปลี่ยนแปลงราคาโดยไม่แจ้งให้ทราบล่วงหน้า',
+                'กรณีสินค้าไม่ตรงตามที่สั่ง สามารถแจ้งเปลี่ยนแปลงได้ภายใน 7 วัน'
+            ]
+        };
+    };
+
     const vatAmount = cartTotal * 0.07; // 7% VAT
     const totalWithVat = cartTotal + vatAmount;
 
@@ -208,15 +260,38 @@ export default function QuotationPage() {
                         <span>กลับ</span>
                     </button>
 
-                    <button
-                        onClick={handlePrint}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        <span>พิมพ์</span>
-                    </button>
+                    <div className="flex space-x-3">
+                        <button
+                            onClick={handlePreviewPDF}
+                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <span>ดู PDF</span>
+                        </button>
+
+                        <button
+                            onClick={handleGeneratePDF}
+                            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>ดาวน์โหลด PDF</span>
+                        </button>
+
+                        <button
+                            onClick={handlePrint}
+                            className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 flex items-center space-x-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            <span>พิมพ์</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
